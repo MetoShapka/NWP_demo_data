@@ -9,6 +9,7 @@ class UrbanAirData():
         "Antwerpen": {"nx": 139, "ny": 139, "dx": 500},
         "Paris": {"nx": 989, "ny": 989, "dx": 500},
         "Paris_7.1": {
+            "desc": "HARMONIE-AROME",
             "nx": 989,
             "ny": 989,
             "dx": 500,
@@ -19,12 +20,15 @@ class UrbanAirData():
                 "expver": "aabg",
                 "georef": "u09tvk",
             },
+            "json": "json/aabg.json",
             "polytope": {
                 "collection": "deode",
                 "url": "polytope-test.ecmwf.int",
+                "ts_present": False,
             },
         },
         "Paris_8.0": {
+            "desc": "HARMONIE-AROME",
             "nx": 989,
             "ny": 989,
             "dx": 500,
@@ -40,17 +44,20 @@ class UrbanAirData():
                 "expver": "aad4",
                 "georef": "u09tvk",
             },
+            "json": "json/aad4.json",
             "polytope": {
                 "collection": "deode",
                 "url": "polytope.ecmwf.int",
+                "ts_present": False,
             },
         },
         "Paris_9.0": {
+            "desc": "HARMONIE-AROME",
             "nx": 989,
             "ny": 989,
             "dx": 500,
             "date": "2023-08-20T15:00:00Z",
-            "forecast_range": "PT36",
+            "forecast_range": "PT36H",
             "output_frequency": "PT15M",
             "fdb": {
                 "expver": "aagp",
@@ -60,6 +67,68 @@ class UrbanAirData():
             "polytope": {
                 "collection": "deode",
                 "url": "polytope.ecmwf.int",
+                "ts_present": True,
+            },
+        },
+        "Paris_10.0": {
+            "desc": "HARMONIE-AROME",
+            "nx": 1013,
+            "ny": 1013,
+            "dx": 200,
+            "date": "2023-08-20T18:00:00Z",
+            "forecast_range": "PT30H",
+            "output_frequency": "PT15M",
+            "fdb": {
+                "expver": "aagw",
+                "georef": "u09tvk",
+            },
+            "json": "json/aagw.json",
+            "polytope": {
+                "collection": "deode",
+                "url": "polytope.ecmwf.int",
+                "ts_present": True,
+            },
+        },
+        "Antwerp_2.0": {
+            "desc": "HARMONIE-AROME",
+            "nx": 989,
+            "ny": 989,
+            "dx": 500,
+           "xlatcen" : 51.21,
+           "xloncen" : 4.42,
+            "date": "2025-06-28T18:00:00Z",
+            "forecast_range": "PT36H",
+            "output_frequency": "PT15M",
+            "fdb": {
+                "expver": "aah0",
+                "georef": "u155kd",
+            },
+            "json": "json/aah0.json",
+            "polytope": {
+                "collection": "deode",
+                "url": "polytope.ecmwf.int",
+                "ts_present": True,
+            },
+        },
+        "Antwerp_3.0": {
+            "desc": "HARMONIE-AROME",
+            "nx": 1013,
+            "ny": 1013,
+            "dx": 200,
+           "xlatcen" : 51.21,
+           "xloncen" : 4.42,
+            "date": "2025-06-28T21:00:00Z",
+            "forecast_range": "PT33H",
+            "output_frequency": "PT15M",
+            "fdb": {
+                "expver": "aah1",
+                "georef": "u155kd",
+            },
+            "json": "json/aah1.json",
+            "polytope": {
+                "collection": "deode",
+                "url": "polytope.ecmwf.int",
+                "ts_present": True,
             },
         },
     }
@@ -94,6 +163,22 @@ class UrbanAirData():
             "url": "polytope.ecmwf.int",
             "metadata": data_info["Paris_9.0"],
         },
+        "10.0": {
+            "name": "Paris 10.0",
+            "url": "polytope.ecmwf.int",
+            "metadata": data_info["Paris_10.0"],
+        },
+
+        "11.0": {
+            "name": "Antwerp 2.0",
+            "url": "polytope.ecmwf.int",
+            "metadata": data_info["Antwerp_2.0"],
+        },
+        "12.0": {
+            "name": "Antwerp 3.0",
+            "url": "polytope.ecmwf.int",
+            "metadata": data_info["Antwerp_3.0"],
+        },
     }
     current_version = list(urls)[-1]
     base_url = urls[current_version]["url"]
@@ -116,29 +201,23 @@ class UrbanAirData():
     def __str__(self):
         txt = "Available versions:\n"
         txt += self.dict_print(self.urls, 1, prefix="\n")
-        
+
         return txt
 
     def show(self, version=None):
+        import pydoc
         if version is None:
             version = self.current_version
-      
+
         txt = self.dict_print(self.urls[version], 1, prefix="\n")
         json_file = self.urls[version]["metadata"]["json"]
         with open(json_file, "r", encoding="utf-8") as f:
             toc = json.load(f)
 
-        txt +=f"\nData available from polytope ( from {json_file} )\n"
-        for levtype, content in toc.items():
-          txt += f"\nLevtype:{levtype}\n"
-          for i, group in enumerate(content):
-            txt += f" group:{i}\n"
-            for key, values in group.items():
-              txt += f"  {key}: {values}\n"
-          
-        #txt += json.dumps(toc#)
+        title = f'\t\t ---- Data available from polytope ( from {json_file} ) --- \n'
+        formatted_json = title + json.dumps(toc, indent=4)
+        pydoc.pager(formatted_json)
 
-        return txt
 
 
     def url_version(self, version=None):
@@ -148,14 +227,26 @@ class UrbanAirData():
             if not isinstance(version, str):
                 version = str(version)
             url = self.urls[version]["url"]
+            if 'liu.se' not in url:
+                print(f"Version {version} does not have an lie.se url.")
+                print(f"Run 'python download.py -l' for available versions")
+                url = None
         except KeyError:
-            print(f"Version {version} is not available")
+            print(f"KeyError: {version} is not listed")
             print(self)
             url = None
 
         return url
 
+    def print_url_versions(self):
+        import pprint
+        print("\n\t\t -- Data versions available for direct (url) download  --\n")
+        for url in self.urls:
+            if 'exporter.nsc.liu.se' in self.urls[url]['url']:
+                print(f"version : {url} \n")
+                pprint.pprint(self.urls[url])
+
 if __name__ == "__main__":
 
     uad = UrbanAirData()
-    print(uad.show())
+    uad.show()
